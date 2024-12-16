@@ -1,1 +1,104 @@
 
+import warnings
+warnings.filterwarnings('ignore')
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+%matplotlib inline 
+from sklearn.model_selection import train_test_split
+from sklearn import model_selection
+
+data=pd.read_csv('alzheimers_disease_data1.csv')
+
+data.head()
+
+data.columns
+
+data.describe()
+
+data.info()
+
+df=data.loc[data['Age']<=80]
+df = df.reset_index(drop=True)
+df.head()
+
+from sklearn.preprocessing import LabelEncoder
+lab=LabelEncoder()
+df['BMI']=lab.fit_transform(df['BMI'])
+df['DietQuality']=lab.fit_transform(df['DietQuality'])
+df['MemoryComplaints']=lab.fit_transform(df['MemoryComplaints'])
+df1 = df.drop(df[['PatientID','Gender']],axis=1)
+df1.head()
+
+df1.isnull().sum()
+
+df2 = df1.dropna()
+df2.isnull().sum()
+df2.head()
+
+sns.countplot(x='FamilyHistoryAlzheimers',data=df2)
+
+def bar_chart(feature):
+    Educated = df[df['FamilyHistoryAlzheimers']==1][feature].value_counts()
+    UnEducated = df[df['FamilyHistoryAlzheimers']==0][feature].value_counts()
+    df_bar=pd.DataFrame([Educated,UnEducated])
+    df_bar.index = ['Educated','UnEducated']
+    df_bar.plot(kind='bar',stacked=True,figsize=(8,5))
+
+bar_chart('Gender')
+plt.xlabel('EducationLevel')
+plt.ylabel('Smoking')
+plt.legend()
+plt.title('Alzeimer_prediction through EducationLevel and Smoking')
+
+facet=sns.FacetGrid(df,hue='Age',aspect=1)
+facet.map(sns.kdeplot,'Diabetes',shade=True)
+facet.set(xlim=(0,df['Diabetes'].max()))
+facet.add_legend()
+plt.xlim(0.5,2)
+
+facet=sns.FacetGrid(df,hue='Age',aspect=2)
+facet.map(sns.kdeplot,'Forgetfulness',shade=True)
+facet.set(xlim=(0,df['Forgetfulness'].max()))
+facet.add_legend()
+plt.xlim(0.6,0.9)
+
+facet=sns.FacetGrid(df,hue='Age',aspect=3)
+facet.map(sns.kdeplot,'MemoryComplaints',shade=True)
+facet.set(xlim=(0,df['MemoryComplaints'].max()))
+facet.add_legend()
+plt.xlim(0,30)
+
+X=df2.iloc[:,df2.columns!='Age']
+y=df2.iloc[:,df2.columns=='Age']
+
+X.shape
+
+X.head()
+
+y.head()
+
+X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.3)
+X_train.head()
+
+y_train.head()
+
+from sklearn.svm import SVC
+
+model1=SVC()
+model1.fit(X_train,y_train)
+
+predic1=model1.predict(X_test)
+
+from sklearn.metrics import accuracy_score
+acc1=accuracy_score(predic1,y_test)
+acc1
+
+from sklearn.metrics import classification_report
+def apply_classifier(model1,X_train,X_test,y_train,y_test):
+    model1.fit(X_train,y_train)
+    predictions=model1.predict(X_test)
+    print("\n classification report: \n{}",format(classification_report(y_test,predictions)))
+
+apply_classifier(model1,X_train,X_test,y_train,y_test)
